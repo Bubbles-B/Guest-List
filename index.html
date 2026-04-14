@@ -81,12 +81,13 @@
     }
 
     .host-name {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 38px; /* Serifs often look better slightly larger */
-  font-weight: 500; /* Medium weight adds a touch of authority */
-  letter-spacing: 0.02em; /* Subtle spacing feels more editorial */
-  color: #3b2208;
-}
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 34px;
+      font-weight: 400;
+      color: #3b2208;
+      line-height: 1.2;
+      margin-bottom: 2px;
+    }
 
     .invite-title {
       font-family: Georgia, serif;
@@ -567,7 +568,7 @@
         </svg>
 
         <div class="card-inner">
-          <span class="invite-tag">You are cordially invited to</span>
+          <span class="invite-tag">You are cordially invited</span>
           <div class="host-name">The Ncamane Family's </div>
           <div class="divider-row">
             <div class="divider-line"></div>
@@ -599,8 +600,8 @@
             </div>
             <div class="detail-box" style="grid-column: 1 / -1;">
               <span class="detail-label">Venue</span>
-              <a href="https://maps.app.goo.gl/ScGRXKatNmZRYuVq8" target="_blank" rel="noopener noreferrer" >
-                   2842 Mompati Street Bochabela, Bloemfontein
+              <a href="https://maps.app.goo.gl/ScGRXKatNmZRYuVq8" target="_blank" rel="noopener noreferrer">
+                2842 Mompati Street Bochabela, Bloemfontein
               </a>
             </div>
           </div>
@@ -746,6 +747,29 @@
       </div>
     </div>
   </div>
+
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
+  
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+      apiKey: "AIzaSyBeguLVfEfEskS3tDYg-RDJt3FWzQfLOGE",
+      authDomain: "thanksgiving-rsvp-4762d.firebaseapp.com",
+      projectId: "thanksgiving-rsvp-4762d",
+      storageBucket: "thanksgiving-rsvp-4762d.firebasestorage.app",
+      messagingSenderId: "861182085738",
+      appId: "1:861182085738:web:c4662a23ea4d9175fcd813",
+      measurementId: "G-DZMW0E9DT7"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+  </script>
 
   <script>
     const PASS = '23May';
