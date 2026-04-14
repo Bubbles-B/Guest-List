@@ -530,15 +530,30 @@
       color: #6b4423;
     }
 
-   @media (max-width: 600px) {
-      body {
-        align-items: flex-start;
+    @media (max-width: 600px) {
+
+      /* Keep stats side-by-side but smaller */
+      .stats-row {
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 5px;
       }
 
-      .invite-details,
-      .attendance-row,
-      .stats-row {
-        grid-template-columns: 1fr;
+      .stats-row .detail-value {
+        font-size: 16px;
+        /* Shrink the big numbers slightly */
+      }
+
+      /* Fix the table overlapping */
+      .admin-card {
+        padding: 1rem 0.5rem;
+        overflow-x: auto;
+        /* Adds a scroll if the names are too long */
+      }
+
+      table {
+        font-size: 11px;
+        /* Smaller text for the guest list */
+        width: 100%;
       }
     }
   </style>
