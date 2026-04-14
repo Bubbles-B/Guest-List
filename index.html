@@ -748,32 +748,32 @@
     </div>
   </div>
 
- <script type="module">
-  // 1. Import the base app AND the Firestore (database) tools
-  import { initializeApp } from "https://gstatic.com";
-  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://gstatic.com";
+  <script type="module">
+    // 1. Import the base app AND the Firestore (database) tools
+    import { initializeApp } from "https://gstatic.com";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://gstatic.com";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBeguLVfEfEskS3tDYg-RDJt3FWzQfLOGE",
-    authDomain: "://firebaseapp.com",
-    projectId: "thanksgiving-rsvp-4762d",
-    storageBucket: "thanksgiving-rsvp-4762d.firebasestorage.app",
-    messagingSenderId: "861182085738",
-    appId: "1:861182085738:web:c4662a23ea4d9175fcd813",
-    measurementId: "G-DZMW0E9DT7"
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyBeguLVfEfEskS3tDYg-RDJt3FWzQfLOGE",
+      authDomain: "://firebaseapp.com",
+      projectId: "thanksgiving-rsvp-4762d",
+      storageBucket: "thanksgiving-rsvp-4762d.firebasestorage.app",
+      messagingSenderId: "861182085738",
+      appId: "1:861182085738:web:c4662a23ea4d9175fcd813",
+      measurementId: "G-DZMW0E9DT7"
+    };
 
-  // 2. Initialize Firebase and the Database
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+    // 2. Initialize Firebase and the Database
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-  // 3. Make these tools available to your other functions below
-  window.db = db;
-  window.dbTools = { collection, addDoc, onSnapshot, query, orderBy };
-  
-  console.log("Firebase Database is now active!");
-</script>
-  
+    // 3. Make these tools available to your other functions below
+    window.db = db;
+    window.dbTools = { collection, addDoc, onSnapshot, query, orderBy };
+
+    console.log("Firebase Database is now active!");
+  </script>
+
   <script>
     const PASS = '23May';
     let selAtt = null;
@@ -800,48 +800,48 @@
     }
 
     async function submitRSVP() {
-  const fn = document.getElementById('fname').value.trim();
-  const ln = document.getElementById('lname').value.trim();
-  const err = document.getElementById('form-error');
-  err.style.display = 'none';
+      const fn = document.getElementById('fname').value.trim();
+      const ln = document.getElementById('lname').value.trim();
+      const err = document.getElementById('form-error');
+      err.style.display = 'none';
 
-  if (!fn || !ln) {
-    err.textContent = 'Please enter your first name and surname.';
-    err.style.display = 'block';
-    return;
-  }
+      if (!fn || !ln) {
+        err.textContent = 'Please enter your first name and surname.';
+        err.style.display = 'block';
+        return;
+      }
 
-  if (!selAtt) {
-    err.textContent = 'Please indicate whether you will be attending.';
-    err.style.display = 'block';
-    return;
-  }
+      if (!selAtt) {
+        err.textContent = 'Please indicate whether you will be attending.';
+        err.style.display = 'block';
+        return;
+      }
 
-  try {
-    // This part sends the data to your Firestore "rsvps" collection
-    await window.dbTools.addDoc(window.dbTools.collection(window.db, "rsvps"), {
-      fname: fn,
-      lname: ln,
-      attending: selAtt,
-      time: new Date().toISOString()
-    });
+      try {
+        // This part sends the data to your Firestore "rsvps" collection
+        await window.dbTools.addDoc(window.dbTools.collection(window.db, "rsvps"), {
+          fname: fn,
+          lname: ln,
+          attending: selAtt,
+          time: new Date().toISOString()
+        });
 
-    // Show the success message
-    document.getElementById('form-container').innerHTML = `
+        // Show the success message
+        document.getElementById('form-container').innerHTML = `
       <div class="success-msg">
         ✦<br><br>
         Thank you, ${fn}!<br>
         <p>${selAtt === 'yes'
-          ? 'We look forward to celebrating with you on 23 May.'
-          : 'We\'ll miss you, but thank you for letting us know.'
-        }</p>
+            ? 'We look forward to celebrating with you on 23 May.'
+            : 'We\'ll miss you, but thank you for letting us know.'
+          }</p>
       </div>`;
-  } catch (e) {
-    console.error("Error adding document: ", e);
-    err.textContent = 'Something went wrong. Please try again.';
-    err.style.display = 'block';
-  }
-}
+      } catch (e) {
+        console.error("Error adding document: ", e);
+        err.textContent = 'Something went wrong. Please try again.';
+        err.style.display = 'block';
+      }
+    }
     function checkAdmin() {
       const pw = document.getElementById('admin-pw').value;
       const err = document.getElementById('pw-error');
@@ -850,38 +850,38 @@
     }
 
     function loadAdmin() {
-  const tbody = document.getElementById('guest-tbody');
-  
-  // 1. Create a query for your "rsvps" collection, newest first
-  const q = window.dbTools.query(
-    window.dbTools.collection(window.db, "rsvps"), 
-    window.dbTools.orderBy("time", "desc")
-  );
+      const tbody = document.getElementById('guest-tbody');
 
-  // 2. Set up the Real-Time Listener
-  window.dbTools.onSnapshot(q, (snapshot) => {
-    tbody.innerHTML = '';
-    let yes = 0, no = 0;
+      // 1. Create a query for your "rsvps" collection, newest first
+      const q = window.dbTools.query(
+        window.dbTools.collection(window.db, "rsvps"),
+        window.dbTools.orderBy("time", "desc")
+      );
 
-    if (snapshot.empty) {
-      document.getElementById('no-guests').style.display = 'block';
-      ['stat-total', 'stat-yes', 'stat-no'].forEach(id => document.getElementById(id).textContent = '0');
-      return;
-    }
+      // 2. Set up the Real-Time Listener
+      window.dbTools.onSnapshot(q, (snapshot) => {
+        tbody.innerHTML = '';
+        let yes = 0, no = 0;
 
-    document.getElementById('no-guests').style.display = 'none';
+        if (snapshot.empty) {
+          document.getElementById('no-guests').style.display = 'block';
+          ['stat-total', 'stat-yes', 'stat-no'].forEach(id => document.getElementById(id).textContent = '0');
+          return;
+        }
 
-    // 3. Loop through the cloud data
-    snapshot.forEach((doc, index) => {
-      const e = doc.data();
-      e.attending === 'yes' ? yes++ : no++;
+        document.getElementById('no-guests').style.display = 'none';
 
-      const d = new Date(e.time);
-      const ds = d.toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' }) +
-                 ' ' + d.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' });
+        // 3. Loop through the cloud data
+        snapshot.forEach((doc, index) => {
+          const e = doc.data();
+          e.attending === 'yes' ? yes++ : no++;
 
-      const row = document.createElement('tr');
-      row.innerHTML = `
+          const d = new Date(e.time);
+          const ds = d.toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' }) +
+            ' ' + d.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' });
+
+          const row = document.createElement('tr');
+          row.innerHTML = `
         <td>${snapshot.size - index}</td>
         <td>${e.fname}</td>
         <td>${e.lname}</td>
@@ -890,15 +890,15 @@
         </span></td>
         <td>${ds}</td>
       `;
-      tbody.appendChild(row);
-    });
+          tbody.appendChild(row);
+        });
 
-    // 4. Update the statistics boxes
-    document.getElementById('stat-total').textContent = snapshot.size;
-    document.getElementById('stat-yes').textContent = yes;
-    document.getElementById('stat-no').textContent = no;
-  });
-}
+        // 4. Update the statistics boxes
+        document.getElementById('stat-total').textContent = snapshot.size;
+        document.getElementById('stat-yes').textContent = yes;
+        document.getElementById('stat-no').textContent = no;
+      });
+    }
 
     function clearData() {
       if (!confirm('Delete all RSVP responses? This cannot be undone.')) return;
