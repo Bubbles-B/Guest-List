@@ -768,145 +768,105 @@
     const db = getFirestore(app);
 
     // 3. Make these tools available to your other functions below
-    window.db = db;
-    window.dbTools = { collection, addDoc, onSnapshot, query, orderBy };
-
-    console.log("Firebase Database is now active!");
-  </script>
-
-  <script>
     const PASS = '23May';
     let selAtt = null;
     let tapCount = 0;
     let tapTimer = null;
 
-    document.querySelector('.invite-title').addEventListener('click', function () {
-      tapCount++;
-      clearTimeout(tapTimer);
-      tapTimer = setTimeout(() => { tapCount = 0; }, 1200);
-      if (tapCount >= 2) { tapCount = 0; showScreen('screen-admin-login'); }
-    });
-
-    function showScreen(id) {
+    // Make functions global so your HTML buttons can "see" them
+    window.showScreen = (id) => {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.getElementById(id).classList.add('active');
       if (id === 'screen-admin') loadAdmin();
-    }
+    };
 
-    function selectAtt(v) {
+    window.selectAtt = (v) => {
       selAtt = v;
       document.getElementById('btn-yes').className = 'att-btn' + (v === 'yes' ? ' sel-yes' : '');
       document.getElementById('btn-no').className = 'att-btn' + (v === 'no' ? ' sel-no' : '');
-    }
+    };
 
-    async function submitRSVP() {
+    window.submitRSVP = async () => {
       const fn = document.getElementById('fname').value.trim();
       const ln = document.getElementById('lname').value.trim();
       const err = document.getElementById('form-error');
       err.style.display = 'none';
 
-      if (!fn || !ln) {
-        err.textContent = 'Please enter your first name and surname.';
-        err.style.display = 'block';
-        return;
-      }
-
-      if (!selAtt) {
-        err.textContent = 'Please indicate whether you will be attending.';
+      if (!fn || !ln || !selAtt) {
+        err.textContent = 'Please complete all fields.';
         err.style.display = 'block';
         return;
       }
 
       try {
-        // This part sends the data to your Firestore "rsvps" collection
-        await window.dbTools.addDoc(window.dbTools.collection(window.db, "rsvps"), {
+        // SUCCESS! This now has direct access to addDoc and db
+        await addDoc(collection(db, "rsvps"), {
           fname: fn,
           lname: ln,
           attending: selAtt,
           time: new Date().toISOString()
         });
 
-        // Show the success message
         document.getElementById('form-container').innerHTML = `
-      <div class="success-msg">
-        ✦<br><br>
-        Thank you, ${fn}!<br>
-        <p>${selAtt === 'yes'
-            ? 'We look forward to celebrating with you on 23 May.'
-            : 'We\'ll miss you, but thank you for letting us know.'
-          }</p>
-      </div>`;
+        <div class="success-msg">
+          Thank you, ${fn}!<br>
+          <p>${selAtt === 'yes' ? 'See you on 23 May!' : 'We\'ll miss you!'}</p>
+        </div>`;
       } catch (e) {
-        console.error("Error adding document: ", e);
-        err.textContent = 'Something went wrong. Please try again.';
+        console.error(e);
+        err.textContent = 'Connection error. Please try again.';
         err.style.display = 'block';
       }
-    }
-    function checkAdmin() {
+    };
+
+    window.checkAdmin = () => {
       const pw = document.getElementById('admin-pw').value;
-      const err = document.getElementById('pw-error');
-      if (pw === PASS) { err.style.display = 'none'; showScreen('screen-admin'); }
-      else { err.style.display = 'block'; document.getElementById('admin-pw').value = ''; }
-    }
+      if (pw === PASS) window.showScreen('screen-admin');
+      else {
+        document.getElementById('pw-error').style.display = 'block';
+        document.getElementById('admin-pw').value = '';
+      }
 
-    function loadAdmin() {
-      const tbody = document.getElementById('guest-tbody');
+      function loadAdmin() {
+        const q = query(collection(db, "rsvps"), orderBy("time", "desc"));
+        onSnapshot(q, (snapshot) => {
+          const tbody = document.getElementById('guest-tbody');
+          tbody.innerHTML = '';
+          let yes = 0, no = 0;
 
-      // 1. Create a query for your "rsvps" collection, newest first
-      const q = window.dbTools.query(
-        window.dbTools.collection(window.db, "rsvps"),
-        window.dbTools.orderBy("time", "desc")
-      );
+          snapshot.forEach((doc, i) => {
+            const e = doc.data();
+            e.attending === 'yes' ? yes++ : no++;
+            const row = `<tr>
+          <td>${i + 1}</td>
+          <td>${e.fname}</td>
+          <td>${e.lname}</td>
+          <td>${e.attending === 'yes' ? 'Attending' : 'No'}</td>
+          <td>${new Date(e.time).toLocaleTimeString()}</td>
+        </tr>`;
+            tbody.innerHTML += row;
+          });
 
-      // 2. Set up the Real-Time Listener
-      window.dbTools.onSnapshot(q, (snapshot) => {
-        tbody.innerHTML = '';
-        let yes = 0, no = 0;
-
-        if (snapshot.empty) {
-          document.getElementById('no-guests').style.display = 'block';
-          ['stat-total', 'stat-yes', 'stat-no'].forEach(id => document.getElementById(id).textContent = '0');
-          return;
-        }
-
-        document.getElementById('no-guests').style.display = 'none';
-
-        // 3. Loop through the cloud data
-        snapshot.forEach((doc, index) => {
-          const e = doc.data();
-          e.attending === 'yes' ? yes++ : no++;
-
-          const d = new Date(e.time);
-          const ds = d.toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' }) +
-            ' ' + d.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' });
-
-          const row = document.createElement('tr');
-          row.innerHTML = `
-        <td>${snapshot.size - index}</td>
-        <td>${e.fname}</td>
-        <td>${e.lname}</td>
-        <td><span class="badge ${e.attending === 'yes' ? 'badge-yes' : 'badge-no'}">
-          ${e.attending === 'yes' ? 'Attending' : 'Not attending'}
-        </span></td>
-        <td>${ds}</td>
-      `;
-          tbody.appendChild(row);
+          document.getElementById('stat-total').textContent = snapshot.size;
+          document.getElementById('stat-yes').textContent = yes;
+          document.getElementById('stat-no').textContent = no;
         });
-
-        // 4. Update the statistics boxes
-        document.getElementById('stat-total').textContent = snapshot.size;
-        document.getElementById('stat-yes').textContent = yes;
-        document.getElementById('stat-no').textContent = no;
+      }
+      // Admin secret tap listener
+      document.querySelector('.invite-title').addEventListener('click', () => {
+        tapCount++;
+        clearTimeout(tapTimer);
+        tapTimer = setTimeout(() => { tapCount = 0; }, 1200);
+        if (tapCount >= 2) window.showScreen('screen-admin-login');
       });
-    }
 
-    function clearData() {
-      if (!confirm('Delete all RSVP responses? This cannot be undone.')) return;
+      function clearData() {
+        if (!confirm('Delete all RSVP responses? This cannot be undone.')) return;
 
-      localStorage.removeItem('rsvps');
+        localStorage.removeItem('rsvps');
 
-      loadAdmin(); // refresh table
-    }
+        loadAdmin(); // refresh table
+      }
   </script>
 </body>
 
