@@ -444,17 +444,11 @@
       color: #8b6340;
     }
 
-    /* --- FIX: scrollable table wrapper --- */
-    .table-wrap {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      margin-bottom: 0.5rem;
-    }
-
     .guest-table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 420px; /* forces scroll on small screens instead of squishing */
+      table-layout: fixed;
+      /* forces columns to respect set widths */
     }
 
     .guest-table th {
@@ -464,7 +458,7 @@
       color: #8b6340;
       font-family: Georgia, serif;
       text-align: left;
-      padding: 8px 10px;
+      padding: 8px 6px;
       border-bottom: 0.5px solid #c8a882;
     }
 
@@ -472,11 +466,49 @@
       font-family: Georgia, serif;
       font-size: 13px;
       color: #3b2208;
-      padding: 10px;
+      padding: 10px 6px;
       border-bottom: 0.5px solid #e8d5be;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    /* Control each column's width */
+    .guest-table th:nth-child(1),
+    .guest-table td:nth-child(1) {
+      width: 8%;
+    }
+
+    /* # */
+
+    .guest-table th:nth-child(2),
+    .guest-table td:nth-child(2) {
+      width: 22%;
+    }
+
+    /* Name */
+
+    .guest-table th:nth-child(3),
+    .guest-table td:nth-child(3) {
+      width: 22%;
+    }
+
+    /* Surname */
+
+    .guest-table th:nth-child(4),
+    .guest-table td:nth-child(4) {
+      width: 18%;
+    }
+
+    /* Status */
+
+    .guest-table th:nth-child(5),
+    .guest-table td:nth-child(5) {
+      width: 30%;
+      /* Submitted */
+      white-space: normal;
+      /* allow date to wrap if needed */
+      word-break: break-word;
     }
 
     .badge {
