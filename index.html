@@ -749,29 +749,22 @@
   </div>
 
   <script type="module">
-    // Import the functions you need from the SDKs you need
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, serverTimestamp, query, orderBy }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // TODO: Add SDKs for Firebase products that you want to use
-    // https://firebase.google.com/docs/web/setup#available-libraries
-
-    // Your web app's Firebase configuration
-    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
     const firebaseConfig = {
       apiKey: "AIzaSyBeguLVfEfEskS3tDYg-RDJt3FWzQfLOGE",
       authDomain: "thanksgiving-rsvp-4762d.firebaseapp.com",
       projectId: "thanksgiving-rsvp-4762d",
       storageBucket: "thanksgiving-rsvp-4762d.firebasestorage.app",
       messagingSenderId: "861182085738",
-      appId: "1:861182085738:web:c4662a23ea4d9175fcd813",
-      measurementId: "G-DZMW0E9DT7"
+      appId: "1:861182085738:web:c4662a23ea4d9175fcd813"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
-  </script>
+    const db = getFirestore(app);
 
-  <script>
     const PASS = '23May';
     let selAtt = null;
     let tapCount = 0;
@@ -784,19 +777,19 @@
       if (tapCount >= 2) { tapCount = 0; showScreen('screen-admin-login'); }
     });
 
-    function showScreen(id) {
+    window.showScreen = function (id) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.getElementById(id).classList.add('active');
       if (id === 'screen-admin') loadAdmin();
-    }
+    };
 
-    function selectAtt(v) {
+    window.selectAtt = function (v) {
       selAtt = v;
       document.getElementById('btn-yes').className = 'att-btn' + (v === 'yes' ? ' sel-yes' : '');
       document.getElementById('btn-no').className = 'att-btn' + (v === 'no' ? ' sel-no' : '');
-    }
+    };
 
-    function submitRSVP() {
+    window.submitRSVP = async function () {
       const fn = document.getElementById('fname').value.trim();
       const ln = document.getElementById('lname').value.trim();
       const err = document.getElementById('form-error');
@@ -807,50 +800,52 @@
         err.style.display = 'block';
         return;
       }
-
       if (!selAtt) {
         err.textContent = 'Please indicate whether you will be attending.';
         err.style.display = 'block';
         return;
       }
 
-      const data = JSON.parse(localStorage.getItem('rsvps') || '[]');
+      try {
+        await addDoc(collection(db, 'rsvps'), {
+          fname: fn,
+          lname: ln,
+          attending: selAtt,
+          time: serverTimestamp()
+        });
 
-      data.push({
-        fname: fn,
-        lname: ln,
-        attending: selAtt,
-        time: new Date().toISOString()
-      });
+        document.getElementById('form-container').innerHTML = `
+        <div class="success-msg">
+          ✦<br><br>
+          Thank you, ${fn}!<br>
+          <p>${selAtt === 'yes'
+            ? 'We look forward to celebrating with you on 23 May.'
+            : "We'll miss you, but thank you for letting us know."
+          }</p>
+        </div>`;
+      } catch (e) {
+        err.textContent = 'Something went wrong. Please try again.';
+        err.style.display = 'block';
+      }
+    };
 
-      localStorage.setItem('rsvps', JSON.stringify(data));
-
-      document.getElementById('form-container').innerHTML = `
-    <div class="success-msg">
-      ✦<br><br>
-      Thank you, ${fn}!<br>
-      <p>${selAtt === 'yes'
-          ? 'We look forward to celebrating with you on 23 May.'
-          : 'We\'ll miss you, but thank you for letting us know.'
-        }</p>
-    </div>`;
-    }
-
-    function checkAdmin() {
+    window.checkAdmin = function () {
       const pw = document.getElementById('admin-pw').value;
       const err = document.getElementById('pw-error');
       if (pw === PASS) { err.style.display = 'none'; showScreen('screen-admin'); }
       else { err.style.display = 'block'; document.getElementById('admin-pw').value = ''; }
-    }
+    };
 
-    function loadAdmin() {
+    window.loadAdmin = async function () {
       const tbody = document.getElementById('guest-tbody');
-      tbody.innerHTML = '';
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:1rem;color:#b89970">Loading…</td></tr>';
 
       try {
-        const entries = JSON.parse(localStorage.getItem('rsvps') || '[]');
+        const q = query(collection(db, 'rsvps'), orderBy('time', 'asc'));
+        const snapshot = await getDocs(q);
+        tbody.innerHTML = '';
 
-        if (!entries.length) {
+        if (snapshot.empty) {
           document.getElementById('no-guests').style.display = 'block';
           ['stat-total', 'stat-yes', 'stat-no'].forEach(id =>
             document.getElementById(id).textContent = '0'
@@ -859,15 +854,14 @@
         }
 
         document.getElementById('no-guests').style.display = 'none';
+        let yes = 0, no = 0, i = 0;
 
-        entries.sort((a, b) => new Date(a.time) - new Date(b.time));
-
-        let yes = 0, no = 0;
-
-        entries.forEach((e, i) => {
+        snapshot.forEach(docSnap => {
+          i++;
+          const e = docSnap.data();
           if (e.attending === 'yes') yes++; else no++;
 
-          const d = new Date(e.time);
+          const d = e.time?.toDate ? e.time.toDate() : new Date();
           const ds =
             d.toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' }) +
             ' ' +
@@ -875,39 +869,35 @@
 
           const row = document.createElement('tr');
           row.innerHTML = `
-        <td>${i + 1}</td>
-        <td>${e.fname}</td>
-        <td>${e.lname}</td>
-        <td>${e.attending === 'yes' ? 'Attending' : 'Not attending'}</td>
-        <td>${ds}</td>
-      `;
+          <td>${i}</td>
+          <td>${e.fname}</td>
+          <td>${e.lname}</td>
+          <td>${e.attending === 'yes' ? 'Attending' : 'Not attending'}</td>
+          <td>${ds}</td>`;
           tbody.appendChild(row);
         });
 
-        document.getElementById('stat-total').textContent = entries.length;
+        document.getElementById('stat-total').textContent = i;
         document.getElementById('stat-yes').textContent = yes;
         document.getElementById('stat-no').textContent = no;
 
       } catch (e) {
-        tbody.innerHTML = `
-      <tr>
-        <td colspan="5" style="text-align:center;color:#b89970;padding:1rem">
-          Error loading data.
-        </td>
-      </tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#b89970;padding:1rem">Error loading data.</td></tr>`;
       }
-    }
+    };
 
-    function clearData() {
+    window.clearData = async function () {
       if (!confirm('Delete all RSVP responses? This cannot be undone.')) return;
 
-      localStorage.removeItem('rsvps');
+      const snapshot = await getDocs(collection(db, 'rsvps'));
+      const deletes = snapshot.docs.map(d => deleteDoc(doc(db, 'rsvps', d.id)));
+      await Promise.all(deletes);
+      loadAdmin();
+    };
 
-      loadAdmin(); // refresh table
-    }
+    // Show first screen
+    showScreen('screen-invite');
   </script>
 </body>
 
 </html>
-
-
